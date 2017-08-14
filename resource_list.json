@@ -1,4 +1,5 @@
-[{
+[
+    {
         "magnets": [
             "magnet:?xt=urn:btih:1cb8227622543dac244f8c3edd5d879ae9f69da1"
         ],
@@ -11127,15 +11128,17 @@
     },
     {
         "magnets": [
-            "magnet:?xt=urn:btih:f8bd40f2eec798a146cb0a52672e64d309c95c1e",
-            "magnet:?xt=urn:btih:00000000007f335000000000007f3390",
             "magnet:?xt=urn:btih:00000000007f624800000000007f624c",
-            "magnet:?xt=urn:btih:00000000007f625000000000007f6254",
-            "magnet:?xt=urn:btih:00000000007f339400000000007f33b8",
-            "magnet:?xt=urn:btih:fcc094b2a68dc12d26b2d701aed4d96c",
-            "magnet:?xt=urn:btih:00000000007f629c00000000007f6294",
+            "magnet:?xt=urn:btih:f8bd40f2eec798a146cb0a52672e64d309c95c1e",
+            "magnet:?xt=urn:btih:00000000007f625c00000000007f3350",
+            "magnet:?xt=urn:btih:00000000007f335000000000007f3390",
             "magnet:?xt=urn:btih:00000000007f625800000000007f625c",
-            "magnet:?xt=urn:btih:00000000007f33dc00000000007f3400"
+            "magnet:?xt=urn:btih:00000000007f629c00000000007f6294",
+            "magnet:?xt=urn:btih:fcc094b2a68dc12d26b2d701aed4d96c",
+            "magnet:?xt=urn:btih:00000000007f339000000000007f3394",
+            "magnet:?xt=urn:btih:00000000007f33dc00000000007f3400",
+            "magnet:?xt=urn:btih:00000000007f625000000000007f6254",
+            "magnet:?xt=urn:btih:00000000007f339400000000007f33b8"
         ],
         "title": "[ACT]マテリアルブレイブ / Material Brave &#8211; 日文硬盘版+汉化补丁 | 琉璃神社 ★ HACG"
     },
@@ -14245,5 +14248,11 @@
             "magnet:?xt=urn:btih:c306880e52bce73cde52db5426076faa766d096d"
         ],
         "title": "[蛸壶屋][C62-C86合集] | 琉璃神社 ★ HACG"
+    },
+    {
+        "magnets": [
+            "magnet:?xt=urn:btih:ndtpcglovwaddt5r9f4monsterisland"
+        ],
+        "title": "进击的萝莉 Monster Island 南海熱愛大作戰 | 琉璃神社 ★ HACG"
     }
 ]

@@ -1,4 +1,5 @@
 import requests, re, json, sys, os, imp, codecs
+from multiprocessing import Process
 
 imp.reload(sys)
 
@@ -30,60 +31,73 @@ def scan_page(url, depth=0):
     sys.stdout.flush()
 
     try:
-        result = session.get(url, timeout=600)
+        result = session.get(url, timeout=5)
         print("status:%d" % (result.status_code))
         viewed_urls.append(url)
         if not (result.status_code >= 400 and result.status_code<500):
             result.raise_for_status()
     except Exception as e:
         print("connect error")
-        scan_page(url, depth+1)
+        Process(target=scan_page, args=(url,depth+1)).start()
         return
+    # result_text is html
     result_text = result.content.decode("utf8",errors='ignore')
+    # print(result_text.encode("utf8"))
+    # 获取页面当中的magnet 并将magnet格式化为magnet_list 页面标题变为page_title 整体化为new_resource
     magnet_list = get_magnet_links(result_text)
     sub_urls = get_sub_urls(result_text, url)
     page_title = get_page_title(result_text)
     new_resource = {'title':page_title, 'magnets': magnet_list}
-    for ss in magnet_list:
-        print(ss)
 
+    # 如果已经在列表里了 直接开始之后的执行
     if new_resource in resource_list:
         for sub_url in sub_urls:
-            scan_page(sub_url, depth+1)
+            Process(target=scan_page, args=(sub_url,depth+1)).start()
         return
 
     if (len(magnet_list) > 0):
+        # 先将页面标题插入记录最后一次页面标题的文件
         append_title_to_file(page_title, 'magnet_output')
+        # 依次将magnet插入记录最后一次magnet的文件
         for magnet in magnet_list:
             print('Found magnet: ' + magnet)
             sys.stdout.flush()
             append_magnet_to_file(magnet, 'magnet_output')
+        # 将new_resource对象插入读入内存的文件中
         resource_list.append(new_resource)
         remove_duplicated_resources()
+        # 将内存中的文件写入硬盘
         save_json_to_file('resource_list.json')
 
+    # 开始更下一层的遍历
     for sub_url in sub_urls:
-        scan_page(sub_url, depth+1)
+        Process(target=scan_page, args=(sub_url,depth+1)).start()
 
 def get_sub_urls(result_text, url):
+    # 获取当前html中的所有跳转链接
     urls = set(re.findall(r'<a.*?href=[\'"](.*?)[\'"].*?>', result_text))
     sub_urls = []
     for sub_url in urls:
+        # 去除此条链接的头尾空格
         sub_url = sub_url.strip()
+        # 去除空串和不合要求的链接
         if sub_url == '':
             continue
         if 'javascript:' in sub_url or 'mailto:' in sub_url:
             continue
+
         if sub_url[0:4] == 'http':
             try:
                 if (get_url_prefix(sub_url)[1] != get_url_prefix(url)[1]):
                     continue
             except Exception:
                 continue
+        # 处理相对路径
         elif sub_url[0:1] == '/':
             sub_url = get_url_prefix(url)[0] + '://' + get_url_prefix(url)[1] + sub_url
         else:
             sub_url = url + '/' + sub_url
+        # 处理下一级链接
         sub_url = re.sub(r'#.*$', '', sub_url)
         sub_url = re.sub(r'//$', '/', sub_url)
         if ignore_url_param:
@@ -149,15 +163,15 @@ def save_json_to_file(filename):
         output_file.write(json.dumps(resource_list, indent=4, sort_keys=True, ensure_ascii=False))
 
 def main():
-    print("Now it has started!")
+    # print("Now it has started!")
     # print('Enter a website url to start.')
     # root_url = input()
-    root_url = "https://www.llss.me/"
+    root_url = "http://www.llss.me/wp/23897.html/"
     if not '://' in root_url:
         root_url = 'http://' + root_url
-    #with open('magnet_output', 'w+') as output_file:
+    #with open('', 'w+') as output_file:
     #    output_file.write('')
-    scan_page(root_url)
+    Process(target=scan_page, args=(root_url,)).start()
 
 if __name__ == '__main__':
     main()
