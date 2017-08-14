@@ -145,8 +145,9 @@ def save_json_to_file(filename):
         output_file.write(json.dumps(resource_list, indent=4, sort_keys=True, ensure_ascii=False))
 
 def main():
-    print('Enter a website url to start.')
-    root_url = input()
+    print("Now it has started!")
+    # print('Enter a website url to start.')
+    # root_url = input()
     root_url = "www.hacg.fi"
     if not '://' in root_url:
         root_url = 'http://' + root_url
