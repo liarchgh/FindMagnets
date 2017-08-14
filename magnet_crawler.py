@@ -22,26 +22,30 @@ if os.path.exists('resource_list.json'):
 
 def scan_page(url, depth=0):
     if url in viewed_urls:
-        return
+        return None
     if (depth > max_depth):
-        return
+        return None
 
     print('Entering: ' + url)
     sys.stdout.flush()
 
     try:
-        result = session.get(url, timeout=60)
+        result = session.get(url, timeout=600)
+        print("status:%d" % (result.status_code))
+        viewed_urls.append(url)
         if not (result.status_code >= 400 and result.status_code<500):
             result.raise_for_status()
-        viewed_urls.append(url)
-    except Exception:
-        scan_page(url, depth)
+    except Exception as e:
+        print("connect error")
+        scan_page(url, depth+1)
         return
     result_text = result.content.decode("utf8",errors='ignore')
     magnet_list = get_magnet_links(result_text)
     sub_urls = get_sub_urls(result_text, url)
     page_title = get_page_title(result_text)
     new_resource = {'title':page_title, 'magnets': magnet_list}
+    for ss in magnet_list:
+        print(ss)
 
     if new_resource in resource_list:
         for sub_url in sub_urls:
@@ -118,11 +122,11 @@ def get_page_title(result_text):
         return ''
 
 def append_magnet_to_file(magnet, filename):
-    with open(filename, 'a+') as output_file:
+    with codecs.open(filename, 'a+', 'utf-8') as output_file:
         output_file.write(magnet + '\n')
 
 def append_title_to_file(title, filename):
-    with open(filename, 'a+') as output_file:
+    with codecs.open(filename, 'a+', 'utf-8') as output_file:
         output_file.write(title + '\n')
 
 def remove_duplicated_resources():
@@ -141,14 +145,14 @@ def remove_duplicated_resources():
     resource_list = new_resource_list
 
 def save_json_to_file(filename):
-    with open(filename, 'wt') as output_file:
+    with codecs.open(filename, 'w+', 'utf-8') as output_file:
         output_file.write(json.dumps(resource_list, indent=4, sort_keys=True, ensure_ascii=False))
 
 def main():
     print("Now it has started!")
     # print('Enter a website url to start.')
     # root_url = input()
-    root_url = "www.hacg.fi"
+    root_url = "https://www.llss.me/"
     if not '://' in root_url:
         root_url = 'http://' + root_url
     #with open('magnet_output', 'w+') as output_file:
