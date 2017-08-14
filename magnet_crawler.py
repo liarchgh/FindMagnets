@@ -1,4 +1,4 @@
-import requests, re, json, sys, os, imp
+import requests, re, json, sys, os, imp, codecs
 
 imp.reload(sys)
 
@@ -15,7 +15,7 @@ session.headers.update({'Cookie': cookie})
 resource_list = []
 
 if os.path.exists('resource_list.json'):
-    with open('resource_list.json', 'r') as json_file:
+    with codecs.open('resource_list.json', 'r', 'utf-8') as json_file:
         resource_list = json.loads(json_file.read())
     for resource in resource_list:
         found_magnets.extend(resource['magnets'])
@@ -95,7 +95,7 @@ def get_url_prefix(url):
     else:
         domain_match = re.search(r'(.*?)://(.*)$', url)
         return (domain_match.group(1) ,domain_match.group(2))
-    
+
 
 def get_magnet_links(result_text):
     if (ignore_html_label):
@@ -106,7 +106,7 @@ def get_magnet_links(result_text):
     hashes = list(set(re.findall(r'[^0-9a-fA-F]([0-9a-fA-F]{40})[^0-9a-fA-F]', result_text)))
     hashes.extend(list(set(re.findall(r'[^0-9a-zA-Z]([0-9a-zA-Z]{32})[^0-9a-zA-Z]', result_text))))
     magnets = list(set([('magnet:?xt=urn:btih:' + hash_value).lower() for hash_value in hashes if not ('magnet:?xt=urn:btih:' + hash_value).lower() in found_magnets]))
-    
+
     found_magnets.extend(magnets)
     return magnets
 
@@ -141,7 +141,7 @@ def remove_duplicated_resources():
     resource_list = new_resource_list
 
 def save_json_to_file(filename):
-    with open(filename, 'w+') as output_file:
+    with open(filename, 'wt') as output_file:
         output_file.write(json.dumps(resource_list, indent=4, sort_keys=True, ensure_ascii=False))
 
 def main():
