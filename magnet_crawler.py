@@ -2,7 +2,8 @@ import requests, re, json, sys, os, imp, codecs, time, threadpool
 
 imp.reload(sys)
 
-tPool = threadpool.ThreadPool(40)
+tPool = threadpool.ThreadPool(0)
+hasVis = 0
 cookie = ''
 max_depth = 20
 viewed_urls = []
@@ -43,6 +44,12 @@ def scan_page(url, depth=0):
         reqs = threadpool.makeRequests(scan_page, funcVar)
         [tPool.putRequest(req) for req in reqs]
         return
+
+    # 统计已浏览的url个数
+    global hasVis
+    hasVis += 1
+    print("Have visited %d urls." % hasVis)
+
     # result_text is html
     result_text = result.content.decode("utf8",errors='ignore')
     # print(result_text.encode("utf8"))
@@ -179,17 +186,66 @@ def endProgram(startTime, maxTime):
     print("Time is not enough!")
     os._exit(0)
 
+def log():
+    logPath = ""
+    logPath1 = "log/Run-"+ time.strftime("%Y_%m_%d", time.localtime())
+    logPath2 = ".log"
+    logPath = logPath1+logPath2
+    # for th in range(1,):
+    #     if not os.path.exists(logPath1+str(th)+logPath2):
+    #         logPath = logPath1+str(th)+logPath2
+    #         break
+    logStr = "StartTime:"+"EndTime"+"RunTime:"+"StartPageTitle:"+"Result:"+"Num of urls visited:"\
+    +"Num of magnet found:"+"Num of new magnet:"
+    with codecs.open(logPath, 'w+', 'utf-8') as logFile:
+        pass
+
 def main():
+    print("Now it has started!")
+    # begin to get the most time of program
     startTime = time.time()
-    # print("Now it has started!")
-    # print('Enter a website url to start.')
-    # root_url = input()
-    root_url = "http://www.llss.me/wp/23897.html/"
+    maxTime = 300
+    print("Enter the most seconds you can stand(default is %d):" % (maxTime))
+    inTime = input()
+    while inTime != '' and not inTime.isdigit():
+        print("please enter right digitals or just enter:")
+        inTime = input()
+    if(inTime != ''):
+        maxTime = int(inTime)
+
+    # 获取最大线程数
+    global tPool
+    maxTSize = 40
+    print("Enter the most size of threads(default is %d):" % (maxTSize))
+    inTSize = input()
+    while inTSize != '' and not inTSize.isdigit():
+        print("please enter right digitals or just enter:")
+        inTSize = input()
+    if inTSize != '':
+        maxTSize = int(inTSize)
+    tPool = threadpool.ThreadPool(maxTSize)
+
+    # 获取扒取网址
+    root_url = "http://www.llss.me/wp/"
+    print('Enter a website url to start\n(default url is %s):' % root_url)
+    inUrl = input()
+    if inUrl != '':
+        root_url = inUrl
     if not '://' in root_url:
         root_url = 'http://' + root_url
+
+    # 获取最大深度
+    global max_depth
+    print('Enter the biggest depth to find(default depth is %d):' % (max_depth))
+    inDt = input()
+    while inDt != '' and not inDt.isdigit():
+        print("please enter right digitals or just enter:")
+        inDt = input()
+    if inDt != '':
+        max_depth = int(inDt)
     #with open('', 'w+') as output_file:
     #    output_file.write('')
-    times = [([startTime, 1200], None)]
+    times = [([startTime, maxTime], None)]
     reqt = threadpool.makeRequests(endProgram, times)
     timepool = threadpool.ThreadPool(1)
     [timepool.putRequest(req) for req in reqt]
@@ -203,5 +259,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
