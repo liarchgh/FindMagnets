@@ -1,10 +1,10 @@
-import requests, re, json, sys, os, imp, codecs
-from multiprocessing import Process
+import requests, re, json, sys, os, imp, codecs, time, threadpool
 
 imp.reload(sys)
 
+tPool = threadpool.ThreadPool(40)
 cookie = ''
-max_depth = 40
+max_depth = 20
 viewed_urls = []
 found_magnets = []
 ignore_url_param = True
@@ -38,7 +38,10 @@ def scan_page(url, depth=0):
             result.raise_for_status()
     except Exception as e:
         print("connect error")
-        Process(target=scan_page, args=(url,depth+1)).start()
+        newUrl = [url, depth + 1]
+        funcVar = [(newUrl, None)]
+        reqs = threadpool.makeRequests(scan_page, funcVar)
+        [tPool.putRequest(req) for req in reqs]
         return
     # result_text is html
     result_text = result.content.decode("utf8",errors='ignore')
@@ -51,8 +54,11 @@ def scan_page(url, depth=0):
 
     # 如果已经在列表里了 直接开始之后的执行
     if new_resource in resource_list:
+        funcVar = []
         for sub_url in sub_urls:
-            Process(target=scan_page, args=(sub_url,depth+1)).start()
+            funcVar.append(([sub_url, depth+1], None))
+        reqs = threadpool.makeRequests(scan_page, funcVar)
+        [tPool.putRequest(req) for req in reqs]
         return
 
     if (len(magnet_list) > 0):
@@ -70,8 +76,13 @@ def scan_page(url, depth=0):
         save_json_to_file('resource_list.json')
 
     # 开始更下一层的遍历
+    funcVar = []
     for sub_url in sub_urls:
-        Process(target=scan_page, args=(sub_url,depth+1)).start()
+        funcVar.append(([sub_url, depth+1], None))
+    reqs = threadpool.makeRequests(scan_page, funcVar)
+    [tPool.putRequest(req) for req in reqs]
+    # for sub_url in sub_urls:
+    #     Process(target=scan_page, args=(sub_url,depth+1)).start()
 
 def get_sub_urls(result_text, url):
     # 获取当前html中的所有跳转链接
@@ -162,7 +173,14 @@ def save_json_to_file(filename):
     with codecs.open(filename, 'w+', 'utf-8') as output_file:
         output_file.write(json.dumps(resource_list, indent=4, sort_keys=True, ensure_ascii=False))
 
+def endProgram(startTime, maxTime):
+    while time.time() - startTime < maxTime:
+        pass
+    print("Time is not enough!")
+    os._exit(0)
+
 def main():
+    startTime = time.time()
     # print("Now it has started!")
     # print('Enter a website url to start.')
     # root_url = input()
@@ -171,7 +189,17 @@ def main():
         root_url = 'http://' + root_url
     #with open('', 'w+') as output_file:
     #    output_file.write('')
-    Process(target=scan_page, args=(root_url,)).start()
+    times = [([startTime, 1200], None)]
+    reqt = threadpool.makeRequests(endProgram, times)
+    timepool = threadpool.ThreadPool(1)
+    [timepool.putRequest(req) for req in reqt]
+
+    urls = [root_url]
+    reqs = threadpool.makeRequests(scan_page, urls)
+    [tPool.putRequest(req) for req in reqs]
+    tPool.wait()
+    print("cost %d s" % (time.time() - startTime))
+    os._exit(0)
 
 if __name__ == '__main__':
     main()
