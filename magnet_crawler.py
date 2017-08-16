@@ -2,7 +2,12 @@ import requests, re, json, sys, os, imp, codecs, time, threadpool
 
 imp.reload(sys)
 
-tPool = threadpool.ThreadPool(40)
+startLTime = (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+startPageTitle = ""
+nomf = 0
+nonm = 0
+tPool = threadpool.ThreadPool(0)
+hasVis = 0
 cookie = ''
 max_depth = 20
 viewed_urls = []
@@ -20,8 +25,10 @@ if os.path.exists('resource_list.json'):
         resource_list = json.loads(json_file.read())
     for resource in resource_list:
         found_magnets.extend(resource['magnets'])
+    nomf = len(found_magnets)
 
 def scan_page(url, depth=0):
+    global hasVis, startPageTitle, nomf, nonm
     if url in viewed_urls:
         return None
     if (depth > max_depth):
@@ -43,6 +50,11 @@ def scan_page(url, depth=0):
         reqs = threadpool.makeRequests(scan_page, funcVar)
         [tPool.putRequest(req) for req in reqs]
         return
+
+    # 统计已浏览的url个数
+    hasVis += 1
+    print("Have visited %d urls." % hasVis)
+
     # result_text is html
     result_text = result.content.decode("utf8",errors='ignore')
     # print(result_text.encode("utf8"))
@@ -51,6 +63,10 @@ def scan_page(url, depth=0):
     sub_urls = get_sub_urls(result_text, url)
     page_title = get_page_title(result_text)
     new_resource = {'title':page_title, 'magnets': magnet_list}
+
+    # 获取首页标题
+    if startPageTitle == "":
+        startPageTitle = page_title
 
     # 如果已经在列表里了 直接开始之后的执行
     if new_resource in resource_list:
@@ -61,6 +77,8 @@ def scan_page(url, depth=0):
         [tPool.putRequest(req) for req in reqs]
         return
 
+    nomf += len(magnet_list)
+    nonm += len(magnet_list)
     if (len(magnet_list) > 0):
         # 先将页面标题插入记录最后一次页面标题的文件
         append_title_to_file(page_title, 'magnet_output')
@@ -177,19 +195,74 @@ def endProgram(startTime, maxTime):
     while time.time() - startTime < maxTime:
         pass
     print("Time is not enough!")
+    log(time.time()-startTime, "Time Over.")
     os._exit(0)
 
+def log(runTime, runRes):
+    global hasVis, nomf, nonm
+    logPath = ""
+    logPath1 = "log/Run-"+ time.strftime("%Y_%m_%d", time.localtime())
+    logPath2 = ".log"
+    logPath = logPath1+logPath2
+    # for th in range(1,):
+    #     if not os.path.exists(logPath1+str(th)+logPath2):
+    #         logPath = logPath1+str(th)+logPath2
+    #         break
+    logStr = "StartTime:%s\nEndTime:%s\nRunTime:%d\nStartPageTitle:%s\nResult:%s\nNum of urls visited:%d\n\
+Num of magnet found:%s\nNum of new magnet:%s\n" % \
+    (startLTime, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),\
+    runTime, startPageTitle, runRes, hasVis, nomf, nonm)
+    if os.path.exists(logPath):
+        logStr = "\n"+logStr
+    with codecs.open(logPath, 'a+', 'utf-8') as logFile:
+        logFile.write(logStr)
+
 def main():
-    startTime = time.time()
-    # print("Now it has started!")
-    # print('Enter a website url to start.')
-    # root_url = input()
-    root_url = "http://www.llss.me/wp/23897.html/"
+    print("Now it has started!")
+    # begin to get the most time of program
+    maxTime = 300
+    print("Enter the most seconds you can stand(default is %d):" % (maxTime))
+    inTime = input()
+    while inTime != '' and not inTime.isdigit():
+        print("please enter right digitals or just enter:")
+        inTime = input()
+    if(inTime != ''):
+        maxTime = int(inTime)
+
+    # 获取最大线程数
+    global tPool
+    maxTSize = 40
+    print("Enter the most size of threads(default is %d):" % (maxTSize))
+    inTSize = input()
+    while inTSize != '' and not inTSize.isdigit():
+        print("please enter right digitals or just enter:")
+        inTSize = input()
+    if inTSize != '':
+        maxTSize = int(inTSize)
+    tPool = threadpool.ThreadPool(maxTSize)
+
+    # 获取扒取网址
+    root_url = "http://www.llss.me/wp/"
+    print('Enter a website url to start\n(default url is %s):' % root_url)
+    inUrl = input()
+    if inUrl != '':
+        root_url = inUrl
     if not '://' in root_url:
         root_url = 'http://' + root_url
+
+    # 获取最大深度
+    global max_depth
+    print('Enter the biggest depth to find(default depth is %d):' % (max_depth))
+    inDt = input()
+    while inDt != '' and not inDt.isdigit():
+        print("please enter right digitals or just enter:")
+        inDt = input()
+    if inDt != '':
+        max_depth = int(inDt)
     #with open('', 'w+') as output_file:
     #    output_file.write('')
-    times = [([startTime, 1200], None)]
+    startTime = time.time()
+    times = [([startTime, maxTime], None)]
     reqt = threadpool.makeRequests(endProgram, times)
     timepool = threadpool.ThreadPool(1)
     [timepool.putRequest(req) for req in reqt]
@@ -199,9 +272,9 @@ def main():
     [tPool.putRequest(req) for req in reqs]
     tPool.wait()
     print("cost %d s" % (time.time() - startTime))
+    log(time.time()-startTime, "Succefully")
     os._exit(0)
 
 if __name__ == '__main__':
     main()
-
 
