@@ -20,3 +20,28 @@ Free to add some features:
 ## Original source code comes from [Hello Old Driver](https://github.com/Chion82/hello-old-driver)([琉璃神社](http://www.llss.me) 定时同步爬虫脚本（非官方）。)
 ----------------
 文章内容版权归 [琉璃神社](http://www.llss.me) 所有，本仓库不提供资源。  
+----------------
+# _Plan_
+## 2017_8_15
+多线程
+- [X] 添加多线程功能
+- [X] 程序开始时设定线程数目
+- [ ] 将线程模块换为mul的
+- [ ] 每个线程最长存活时间
+- [ ] 添加互斥锁
+
+输入
+- [ ] 限制扫描的最多url数目
+
+扒取
+- [ ] 可扒取其他网站
+
+日志功能
+- [X] 每次执行向日志文件中添加日志信息
+    - [X] 起始页面的title
+    - [X] 执行结果
+    - [X] 起始、结束时间
+    - [X] 所用时间
+    - [X] 扫描的url数目
+    - [X] 扫描的magnet数目
+    - [X] 新添magnet数目
