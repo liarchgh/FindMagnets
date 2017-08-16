@@ -2,6 +2,10 @@ import requests, re, json, sys, os, imp, codecs, time, threadpool
 
 imp.reload(sys)
 
+startLTime = (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+startPageTitle = ""
+nomf = 0
+nonm = 0
 tPool = threadpool.ThreadPool(0)
 hasVis = 0
 cookie = ''
@@ -21,8 +25,10 @@ if os.path.exists('resource_list.json'):
         resource_list = json.loads(json_file.read())
     for resource in resource_list:
         found_magnets.extend(resource['magnets'])
+    nomf = len(found_magnets)
 
 def scan_page(url, depth=0):
+    global hasVis, startPageTitle, nomf, nonm
     if url in viewed_urls:
         return None
     if (depth > max_depth):
@@ -46,7 +52,6 @@ def scan_page(url, depth=0):
         return
 
     # 统计已浏览的url个数
-    global hasVis
     hasVis += 1
     print("Have visited %d urls." % hasVis)
 
@@ -59,6 +64,10 @@ def scan_page(url, depth=0):
     page_title = get_page_title(result_text)
     new_resource = {'title':page_title, 'magnets': magnet_list}
 
+    # 获取首页标题
+    if startPageTitle == "":
+        startPageTitle = page_title
+
     # 如果已经在列表里了 直接开始之后的执行
     if new_resource in resource_list:
         funcVar = []
@@ -68,6 +77,8 @@ def scan_page(url, depth=0):
         [tPool.putRequest(req) for req in reqs]
         return
 
+    nomf += len(magnet_list)
+    nonm += len(magnet_list)
     if (len(magnet_list) > 0):
         # 先将页面标题插入记录最后一次页面标题的文件
         append_title_to_file(page_title, 'magnet_output')
@@ -184,9 +195,11 @@ def endProgram(startTime, maxTime):
     while time.time() - startTime < maxTime:
         pass
     print("Time is not enough!")
+    log(time.time()-startTime, "Time Over.")
     os._exit(0)
 
-def log():
+def log(runTime, runRes):
+    global hasVis, nomf, nonm
     logPath = ""
     logPath1 = "log/Run-"+ time.strftime("%Y_%m_%d", time.localtime())
     logPath2 = ".log"
@@ -195,15 +208,18 @@ def log():
     #     if not os.path.exists(logPath1+str(th)+logPath2):
     #         logPath = logPath1+str(th)+logPath2
     #         break
-    logStr = "StartTime:"+"EndTime"+"RunTime:"+"StartPageTitle:"+"Result:"+"Num of urls visited:"\
-    +"Num of magnet found:"+"Num of new magnet:"
-    with codecs.open(logPath, 'w+', 'utf-8') as logFile:
-        pass
+    logStr = "StartTime:%s\nEndTime:%s\nRunTime:%d\nStartPageTitle:%s\nResult:%s\nNum of urls visited:%d\n\
+Num of magnet found:%s\nNum of new magnet:%s\n" % \
+    (startLTime, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),\
+    runTime, startPageTitle, runRes, hasVis, nomf, nonm)
+    if os.path.exists(logPath):
+        logStr = "\n"+logStr
+    with codecs.open(logPath, 'a+', 'utf-8') as logFile:
+        logFile.write(logStr)
 
 def main():
     print("Now it has started!")
     # begin to get the most time of program
-    startTime = time.time()
     maxTime = 300
     print("Enter the most seconds you can stand(default is %d):" % (maxTime))
     inTime = input()
@@ -245,6 +261,7 @@ def main():
         max_depth = int(inDt)
     #with open('', 'w+') as output_file:
     #    output_file.write('')
+    startTime = time.time()
     times = [([startTime, maxTime], None)]
     reqt = threadpool.makeRequests(endProgram, times)
     timepool = threadpool.ThreadPool(1)
@@ -255,6 +272,7 @@ def main():
     [tPool.putRequest(req) for req in reqs]
     tPool.wait()
     print("cost %d s" % (time.time() - startTime))
+    log(time.time()-startTime, "Succefully")
     os._exit(0)
 
 if __name__ == '__main__':
