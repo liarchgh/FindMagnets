@@ -1,17 +1,17 @@
-import requests, re, json, sys, os, imp, codecs, time, threadpool
+import requests, re, json, sys, os, imp, codecs, time, threadpool, threading
 
 imp.reload(sys)
 
 startLTime = (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 startPageTitle = ""
-nomf = 0
-nonm = 0
+nomf = 0#loc
+nonm = 0#loc
 tPool = threadpool.ThreadPool(0)
-hasVis = 0
+hasVis = 0#loc
 cookie = ''
 max_depth = 20
-viewed_urls = []
-found_magnets = []
+viewed_urls = []#loc
+found_magnets = []#loc
 ignore_url_param = True
 ignore_html_label = True
 
